@@ -45,7 +45,7 @@ function serveStaticContent(req, res) {
 }
 
 http.createServer(serveStaticContent).listen(PORT);
-console.log(Server running at http://localhost:${PORT});
+console.log(`Server running at http://localhost:${PORT}`);
 
 
 // index.html
@@ -104,7 +104,7 @@ const PORT = 3000;
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
 app.listen(PORT, () => {
@@ -145,7 +145,7 @@ function onRequest(req, res) {
 }
 
 http.createServer(onRequest).listen(PORT);
-console.log(Server running at http://localhost:${PORT});
+console.log(`Server running at http://localhost:${PORT}`);
 
 
 ------------------------------------------------
@@ -167,6 +167,7 @@ Implementation:
 // index.js :
 const express = require('express');
 const bodyParser = require('body-parser');
+const path = require('path');
 
 const app = express();
 const PORT = 3000;
@@ -187,14 +188,14 @@ app.get('/', (req, res) => {
 app.post('/register', (req, res) => {
   const { username, email, password } = req.body;
   users.push({ id: Date.now(), username, email, password });
-  res.send(User registered successfully!);
+  res.send(`User registered successfully!`);
 });
 
 app.listen(PORT, () => {
-  console.log(Server running at http://localhost:${PORT});
+  console.log(`Server running at http://localhost:${PORT}`);
 });
 
-/public/index.html :
+index.html :
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -233,6 +234,8 @@ Implementation:
 // index.js :
 const express = require('express');
 const bodyParser = require('body-parser');
+const path = require('path');
+
 
 const app = express();
 const PORT = 3000;
@@ -259,14 +262,14 @@ app.post('/login', (req, res) => {
   const user = users.find(u => u.username === username && u.password === password);
   
   if (user) {
-    res.send(Welcome, ${username}!);
+    res.send(`Welcome, ${username}!`);
   } else {
     res.status(401).send('Invalid credentials');
   }
 });
 
 app.listen(PORT, () => {
-  console.log(Server running at http://localhost:${PORT});
+  console.log(`Server running at http://localhost:${PORT}`);
 });
 
 
@@ -435,6 +438,10 @@ rl.question('Enter a password to hash: ', async (answer) => {
 Theory:
 RESTful APIs follow standard HTTP methods for CRUD (Create, Read, Update, Delete) operations. Express.js is commonly used to build RESTful APIs in Node.js.
 
+Use commands like:
+npm init -y
+npm uuid
+
 Implementation:
 const express = require('express');
 const uuid = require('uuid');
@@ -444,6 +451,11 @@ const port = 3000;
 app.use(express.json());
 
 let tasks = [];
+
+// GET / - Welcome message
+app.get('/', (req, res) => {
+    res.send('Welcome to the Task Management API');
+});
 
 // GET /tasks - Read all tasks
 app.get('/tasks', (req, res) => {
@@ -513,9 +525,8 @@ app.delete('/tasks/:id', (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(Server running at http://localhost:${port});
+    console.log(`Server running at http://localhost:${port}`);
 });
-
 
 ----------------------------------------------
 
