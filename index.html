@@ -1,0 +1,557 @@
+WAD 
+
+1. Create a simple Node.js server that listens on a port and serves static content
+
+Theory:
+Node.js provides built-in modules like http and fs that allow us to create servers and handle file operations easily. 
+We can use these to serve static content.
+
+run these cmd beofre running this code :
+npm init -y
+
+// script.js
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+
+const PORT = 3000;
+
+function serveStaticContent(req, res) {
+  let filePath = '.' + req.url;
+  if (filePath === './') {
+    filePath = './index.html';
+  }
+
+  const extname = String(path.extname(filePath)).toLowerCase();
+  const mimeTypes = {
+    '.html': 'text/html',
+    '.js': 'text/javascript',
+    '.css': 'text/css',
+    '.json': 'application/json',
+    '.png': 'image/png',
+    '.svg': 'image/svg+xml',
+    '.wav': 'audio/wav',
+    '.mp4': 'video/mp4',
+  };
+
+  fs.readFile(filePath, (err, content) => {
+    if (err) {
+      res.writeHead(404, {'Content-Type': 'text/plain'});
+      return res.end('404 Not Found\n', 'utf8');
+    }
+    res.writeHead(200, {'Content-Type': mimeTypes[extname]});
+    res.end(content, 'utf8');
+  });
+}
+
+http.createServer(serveStaticContent).listen(PORT);
+console.log(Server running at http://localhost:${PORT});
+
+
+// index.html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    Hello World
+  </body>
+</html>
+
+
+------------------------------------------
+
+
+2. Develop a Node.js web app that serves a static HTML page using the http or express module
+
+Theory:
+Express is a popular framework built on top of Node.js that simplifies creating web applications. 
+It provides middleware support and makes routing easier compared to the native HTTP module.
+
+run these cmd beofre running this code :
+1. npm init -y
+2. npm i express
+
+Implementation:
+
+step 1: create folder named 'public', add a index.html file in it and then paste below code :
+
+/public/index.html
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    Hello World
+  </body>
+</html>
+
+
+// script.js
+const express = require('express');
+const path = require('path');
+
+const app = express();
+const PORT = 3000;
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.listen(PORT, () => {
+  console.log(Server running at http://localhost:${PORT});
+});
+
+
+---------------------------------------------
+
+
+3. Build an app that listens for a GET request and responds with a "Hello, World!" message or JSON data
+
+Theory:
+HTTP methods define the action to be performed on a resource. 
+GET is used for retrieving data, and it's the default method when entering a URL in a web browser.
+
+run these in cmd before running code :
+1. npm init -y
+
+Implementation:
+const http = require('http');
+
+const PORT = 3000;
+
+function onRequest(req, res) {
+  console.log(Received ${req.method} request for ${req.url});
+
+  if (req.url === '/') {
+    res.writeHead(200, {'Content-Type': 'text/plain'});
+    res.end('Hello, World!');
+  } else if (req.url === '/json') {
+    res.writeHead(200, {'Content-Type': 'application/json'});
+    res.end(JSON.stringify({ message: 'Hello, JSON!' }));
+  } else {
+    res.writeHead(404, {'Content-Type': 'text/plain'});
+    res.end('404 Not Found\n', 'utf8');
+  }
+}
+
+http.createServer(onRequest).listen(PORT);
+console.log(Server running at http://localhost:${PORT});
+
+
+------------------------------------------------
+
+
+4. Design a basic HTML form for user registration (username, email, password) and extend the app to handle 
+POST requests from a registration form, saving the user data in memory
+
+Theory:
+HTML forms allow users to input data, which can then be sent to the server via HTTP methods like POST. 
+On the server-side, we can parse this data and store it temporarily in memory.
+
+run these in cmd before running code :
+1. npm init -y
+2. npm i express body-parser
+
+Implementation:
+
+// index.js :
+const express = require('express');
+const bodyParser = require('body-parser');
+
+const app = express();
+const PORT = 3000;
+
+let users = [];
+
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Serve static files
+app.use(express.static(__dirname));
+
+// Handle GET request for root path
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Handle POST request for user registration
+app.post('/register', (req, res) => {
+  const { username, email, password } = req.body;
+  users.push({ id: Date.now(), username, email, password });
+  res.send(User registered successfully!);
+});
+
+app.listen(PORT, () => {
+  console.log(Server running at http://localhost:${PORT});
+});
+
+/public/index.html :
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Registration</title>
+</head>
+<body>
+    <h1>User Registration Form</h1>
+    <form action="/register" method="post">
+        <label for="username">Username:</label><br>
+        <input type="text" id="username" name="username" required><br>
+        <label for="email">Email:</label><br>
+        <input type="email" id="email" name="email" required><br>
+        <label for="password">Password:</label><br>
+        <input type="password" id="password" name="password" required><br><br>
+        <input type="submit" value="Register">
+    </form>
+</body>
+</html>
+
+
+----------------------------------------------
+
+
+5. Build a simple login form that accepts username and password inputs
+
+Theory:
+Login forms typically involve two main fields: username and password. These are usually submitted via POST requests for security reasons.
+
+run these in cmd before running code :
+1. npm init -y
+2. npm i express body-parser
+
+Implementation:
+
+// index.js :
+const express = require('express');
+const bodyParser = require('body-parser');
+
+const app = express();
+const PORT = 3000;
+
+let users = [
+  { id: 1, username: 'john', password: 'hello123' },
+  { id: 2, username: 'jane', password: 'world456' }
+];
+
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Serve static files
+app.use(express.static(__dirname));
+
+// Handle GET request for root path
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+// Handle POST request for user login
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+  
+  const user = users.find(u => u.username === username && u.password === password);
+  
+  if (user) {
+    res.send(Welcome, ${username}!);
+  } else {
+    res.status(401).send('Invalid credentials');
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(Server running at http://localhost:${PORT});
+});
+
+
+// /public/index.js
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Form</title>
+</head>
+<body>
+    <h1>Login Form</h1>
+    <form action="/login" method="post">
+        <label for="username">Username:</label><br>
+        <input type="text" id="username" name="username" required><br>
+        <label for="password">Password:</label><br>
+        <input type="password" id="password" name="password" required><br><br>
+        <input type="submit" value="Login">
+    </form>
+</body>
+</html>
+
+
+----------------------------------------------
+
+6. Create an HTML form with JavaScript to validate fields before submitting
+
+Theory:
+Client-side validation helps improve user experience by providing immediate feedback on input errors before sending data to the server.
+
+Implementation:
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Registration Form with Validation</title>
+    <style>
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>User Registration Form</h1>
+    <form id="registrationForm">
+        <label for="username">Username:</label><br>
+        <input type="text" id="username" name="username"><span class="error" id="usernameError"></span><br>
+        <label for="email">Email:</label><br>
+        <input type="email" id="email" name="email"><span class="error" id="emailError"></span><br>
+        <label for="password">Password:</label><br>
+        <input type="password" id="password" name="password"><span class="error" id="passwordError"></span><br>
+        <label for="confirmPassword">Confirm Password:</label><br>
+        <input type="password" id="confirmPassword" name="confirmPassword"><span class="error" id="confirmPasswordError"></span><br><br>
+        <input type="submit" value="Register">
+    </form>
+
+    <script>
+        const form = document.getElementById('registrationForm');
+        form.addEventListener('submit', validateForm);
+
+        function validateForm(event) {
+            let isValid = true;
+
+            // Clear previous errors
+            document.querySelectorAll('.error').forEach(error => error.textContent = '');
+
+            // Username validation
+            const username = document.getElementById('username').value.trim();
+            if (username.length === 0) {
+                document.getElementById('usernameError').textContent = 'Username is required';
+                isValid = false;
+            } else if (username.length < 3 || username.length > 15) {
+                document.getElementById('usernameError').textContent = 'Username must be between 3 and 15 characters';
+                isValid = false;
+            }
+
+            // Email validation
+            const email = document.getElementById('email').value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (email.length === 0) {
+                document.getElementById('emailError').textContent = 'Email is required';
+                isValid = false;
+            } else if (!emailRegex.test(email)) {
+                document.getElementById('emailError').textContent = 'Invalid email format';
+                isValid = false;
+            }
+
+            // Password validation
+            const password = document.getElementById('password').value.trim();
+            if (password.length === 0) {
+                document.getElementById('passwordError').textContent = 'Password is required';
+                isValid = false;
+            } else if (password.length < 8) {
+                document.getElementById('passwordError').textContent = 'Password must be at least 8 characters long';
+                isValid = false;
+            }
+
+            // Confirm Password validation
+            const confirmPassword = document.getElementById('confirmPassword').value.trim();
+            if (confirmPassword.length === 0) {
+                document.getElementById('confirmPasswordError').textContent = 'Please confirm your password';
+                isValid = false;
+            } else if (confirmPassword !== password) {
+                document.getElementById('confirmPasswordError').textContent = 'Passwords do not match';
+                isValid = false;
+            }
+
+            if (!isValid) {
+                event.preventDefault();
+            }
+        }
+    </script>
+</body>
+</html>
+
+------------------------------------------------
+
+7. Write a simple Node.js script that takes a password as input and hashes it using the bcrypt library
+
+Theory:
+Bcrypt is a popular library for password hashing in Node.js. 
+It uses adaptive cost factor, which means it automatically adjusts the computational overhead needed to compute the hash,
+ making it resistant to brute-force attacks.
+
+run these in cmd before running code :
+1. npm init -y
+2. npm i bcrypt
+
+
+Implementation:
+const bcrypt = require('bcrypt');
+const readline = require('readline');
+
+async function hashPassword(password) {
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    return hashedPassword;
+}
+
+async function verifyPassword(plainTextPassword, hashedPassword) {
+    const isValid = await bcrypt.compare(plainTextPassword, hashedPassword);
+    return isValid;
+}
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+rl.question('Enter a password to hash: ', async (answer) => {
+    const hashedPassword = await hashPassword(answer);
+    console.log('Hashed password:', hashedPassword);
+
+    rl.question('Enter the password again to verify: ', async (verifyAnswer) => {
+        const isValid = await verifyPassword(verifyAnswer, hashedPassword);
+        console.log('Is password valid?', isValid);
+        
+        rl.close();
+    });
+});
+
+
+-------------------------------------------------
+
+8. Implement a simple API that allows adding, updating, reading, and deleting tasks from an in-memory array
+
+Theory:
+RESTful APIs follow standard HTTP methods for CRUD (Create, Read, Update, Delete) operations. Express.js is commonly used to build RESTful APIs in Node.js.
+
+Implementation:
+const express = require('express');
+const uuid = require('uuid');
+const app = express();
+const port = 3000;
+
+app.use(express.json());
+
+let tasks = [];
+
+// GET /tasks - Read all tasks
+app.get('/tasks', (req, res) => {
+    res.json(tasks);
+});
+
+// POST /tasks - Add a new task
+app.post('/tasks', (req, res) => {
+    const { title, description } = req.body;
+    if (!title || !description) {
+        return res.status(400).json({ error: 'Title and description are required' });
+    }
+    
+    const newTask = {
+        id: uuid.v4(),
+        title,
+        description,
+        completed: false
+    };
+    
+    tasks.push(newTask);
+    res.status(201).json(newTask);
+});
+
+// GET /tasks/:id - Read a specific task
+app.get('/tasks/:id', (req, res) => {
+    const id = req.params.id;
+    const task = tasks.find(t => t.id === id);
+    
+    if (!task) {
+        return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    res.json(task);
+});
+
+// PUT /tasks/:id - Update a task
+app.put('/tasks/:id', (req, res) => {
+    const id = req.params.id;
+    const { title, description } = req.body;
+    
+    const index = tasks.findIndex(t => t.id === id);
+    if (index === -1) {
+        return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    tasks[index] = {
+        ...tasks[index],
+        title: title || tasks[index].title,
+        description: description || tasks[index].description
+    };
+    
+    res.json(tasks[index]);
+});
+
+// DELETE /tasks/:id - Delete a task
+app.delete('/tasks/:id', (req, res) => {
+    const id = req.params.id;
+    const index = tasks.findIndex(t => t.id === id);
+    
+    if (index === -1) {
+        return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    tasks.splice(index, 1);
+    res.status(204).send();
+});
+
+app.listen(port, () => {
+    console.log(Server running at http://localhost:${port});
+});
+
+
+----------------------------------------------
+
+
+9. Write a script to connect to a MySQL database, run a simple SELECT query, and display the results in the console
+
+Theory:
+MySQL is a popular relational database management system. Node.js can interact with MySQL databases using libraries like mysql2.
+
+Implementation:
+const mysql = require('mysql2/promise');
+
+async function connectToDatabase() {
+    try {
+        // Create connection pool
+        const pool = mysql.createPool({
+            host: 'your_host',
+            user: 'your_username',
+            password: 'your_password',
+            database: 'your_database'
+        });
+
+        // Run a SELECT query
+        const [rows] = await pool.execute('SELECT * FROM users LIMIT 5');
+        
+        console.log('Query results:');
+        rows.forEach(row => {
+            console.log(row);
+        });
+
+        // Close the connection pool
+        await pool.end();
+
+    } catch (error) {
+        console.error('Error connecting to database:', error);
+    }
+}
+
+connectToDatabase();
