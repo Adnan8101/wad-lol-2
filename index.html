@@ -8,7 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Load the simple dummy dataset
+# Load the dummy dataset
 df = pd.read_csv('simple_dummy_database.csv')
 
 # Handle missing values (fill numeric columns with mean)
@@ -17,10 +17,14 @@ df.fillna(df.mean(numeric_only=True), inplace=True)
 # Remove duplicates
 df.drop_duplicates(inplace=True)
 
-# Visualize age distribution
+# Calculate and print the mean age (Evaluation Metric)
+mean_age = df['Age'].mean()
+print(f"Mean Age: {mean_age:.2f}")
+
+# Visualize the age distribution
 plt.figure(figsize=(8, 5))
 sns.histplot(df['Age'], bins=10, kde=True)
-plt.title("Age Distribution")
+plt.title(f"Age Distribution (Mean Age: {mean_age:.2f})")
 plt.show()
 
 
@@ -28,6 +32,7 @@ plt.show()
 
 2. Apply Linear Regression and Evaluate Performance
 import pandas as pd
+import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
@@ -46,37 +51,97 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 model = LinearRegression()
 model.fit(X_train, y_train)
 
-# Make predictions and evaluate
+# Make predictions on test data
 y_pred = model.predict(X_test)
-print("Mean Squared Error (MSE):", mean_squared_error(y_test, y_pred))
-print("R-squared Score:", r2_score(y_test, y_pred))
+
+# Evaluate the model
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+print("Mean Squared Error (MSE):", mse)
+print("R-squared Score:", r2)
+
+# Plot the data points and the regression line
+plt.figure(figsize=(8, 5))
+
+# Scatter plot for the original data
+plt.scatter(X, y, color='blue', label='Actual Data')
+
+# Plotting the regression line using predictions on the entire X
+plt.plot(X, model.predict(X), color='red', linewidth=2, label='Regression Line')
+
+# Adding labels and title
+plt.xlabel('Income')
+plt.ylabel('Purchased (0 or 1)')
+plt.title(f'Linear Regression\nMSE: {mse:.2f}, R²: {r2:.2f}')
+plt.legend()
+plt.show()
+
 
 
 
 
 3. Apply Naïve Bayes on Categorical Data
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.naive_bayes import CategoricalNB
 from sklearn.preprocessing import LabelEncoder
+from matplotlib.colors import ListedColormap
 
 # Load the simple dummy dataset
 df = pd.read_csv('simple_dummy_database.csv')
 
-# Define features and target
-X = df[['Gender']]
+# Handle missing values (Fill NaN in 'Age' with mean)
+df['Age'] = df['Age'].fillna(df['Age'].mean())
+
+# Bin 'Age' into categories (0 = Young, 1 = Middle-aged, 2 = Old)
+df['Age_Bin'] = pd.cut(df['Age'], bins=[0, 30, 40, 100], labels=[0, 1, 2]).astype(int)
+
+# Define features (Gender and Age_Bin) and target (Purchased)
+X = df[['Gender', 'Age_Bin']].copy()
 y = df['Purchased']
 
-# Encode categorical data
+# Encode 'Gender' column (Male = 1, Female = 0)
 le = LabelEncoder()
-X = X.apply(le.fit_transform)
+X['Gender'] = le.fit_transform(X['Gender'])
 
 # Train Naïve Bayes model
 model = CategoricalNB()
 model.fit(X, y)
 
-# Make a prediction for a new sample (Female)
-prediction = model.predict([[0]])
-print("Prediction for Female:", prediction)
+# Make a prediction for a new sample (Female, Age 25 → Age_Bin 0)
+prediction = model.predict([[0, 0]])  # Female, Young age group
+print("Prediction for [Female, Young]:", prediction)
+
+# Plotting Decision Boundaries
+plt.figure(figsize=(8, 5))
+
+# Generate a grid of points (ensuring no negative values)
+x_min, x_max = 0, 1.5  # Gender values between 0 and 1
+y_min, y_max = 0, 2.5  # Age_Bin values between 0 and 2
+xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
+                     np.arange(y_min, y_max, 0.1))
+
+# Predict the class for each point in the grid
+grid_points = np.c_[xx.ravel(), yy.ravel()]
+Z = model.predict(grid_points)
+Z = Z.reshape(xx.shape)
+
+# Create color maps for plotting
+cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA'])
+cmap_bold = ['red', 'green']
+
+# Plot the decision boundary
+plt.contourf(xx, yy, Z, alpha=0.6, cmap=cmap_light)
+
+# Scatter plot of the actual data points
+plt.scatter(X['Gender'], X['Age_Bin'], c=y, cmap=ListedColormap(cmap_bold), edgecolor='k')
+
+# Add labels and title
+plt.xlabel('Gender (0 = Female, 1 = Male)')
+plt.ylabel('Age Bin (0 = Young, 1 = Middle-aged, 2 = Old)')
+plt.title('Naïve Bayes Decision Boundary')
+plt.show()
 
 
 
@@ -147,18 +212,19 @@ for k in range(2, 6):
 
 7. Decision Tree with Different Feature Subsets
 import pandas as pd
+import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
 
 # Load the simple dummy dataset
 df = pd.read_csv('simple_dummy_database.csv')
 
 # Train and evaluate Decision Tree with different feature subsets
 for features in [['Age'], ['Age', 'Income']]:
-    X = df[features].fillna(0)
+    X = df[features].fillna(0)  # Fill missing values with 0
     y = df['Purchased']
 
-    # Train the model
+    # Train the Decision Tree model
     model = DecisionTreeClassifier(random_state=42)
     model.fit(X, y)
 
@@ -166,3 +232,71 @@ for features in [['Age'], ['Age', 'Income']]:
     y_pred = model.predict(X)
     accuracy = accuracy_score(y, y_pred)
     print(f"Features: {features}, Accuracy: {accuracy:.2f}")
+
+    # Plot the confusion matrix
+    cm = confusion_matrix(y, y_pred)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=model.classes_)
+    disp.plot(cmap='Blues')
+    plt.title(f'Confusion Matrix for Features: {features}')
+    plt.show()
+
+1. Data Visualization and Handling Missing Values, Outliers, and Duplicates
+Theory:
+In this experiment, we used Seaborn and Matplotlib libraries to visualize the Age distribution of our dataset. Visualizing data helps us understand patterns, trends, and possible outliers. We noticed some missing values in the Age column and replaced them with the mean age to ensure that our data remains complete. Removing duplicates ensures there is no repeated information that could bias the analysis. Data cleaning like this is important to maintain data integrity and prepare it for further modeling.
+
+
+2. Linear Regression and Model Evaluation
+Theory:
+We applied Linear Regression to find the relationship between features like Age and Income and the target variable Purchased (whether a product was bought). Linear Regression tries to fit a straight line through the data that best predicts the target variable. The equation for Linear Regression is:
+y=m⋅x+b
+
+Here, y is the predicted target, x is the input feature, m is the slope, and b is the intercept. We evaluated the model using Mean Squared Error (MSE), which measures the average squared difference between actual and predicted values, and R² score, which tells how well the model explains the variation in the data. 
+Splitting the data into train and test sets ensures the model generalizes well on unseen data.
+
+
+3. Naïve Bayes on Categorical Data
+Theory:
+In this experiment, we used the Naïve Bayes algorithm, which is based on Bayes’ Theorem. Naïve Bayes assumes that all features are independent of each other, which is why it is called "naïve". This algorithm works well with categorical data like Gender and Age group. We used CategoricalNB, a variant of Naïve Bayes that deals with categorical features. In this model, the algorithm predicts the probability of purchasing based on these features. For example, it calculates how likely a female in the young age group is to make a purchase. This method is simple, fast, and widely used for classification tasks like email spam filtering.
+
+
+4. Feature Engineering and Feature Importance
+Theory:
+Feature Engineering involves modifying or creating new features to improve the performance of machine learning models. In this experiment, we used two features: Age and Income to predict the target variable (Purchased). We also used Random Forest, an ensemble algorithm, to measure feature importance. This tells us which feature contributes more to the model’s accuracy. Feature engineering improves the model by providing relevant input features and removing unnecessary ones. Knowing which features are more important helps us simplify the model and avoid overfitting.
+
+
+5. DBSCAN Clustering on Synthetic Data
+Theory:
+We used the DBSCAN (Density-Based Spatial Clustering of Applications with Noise) algorithm to identify clusters in synthetic data. DBSCAN is an unsupervised learning algorithm that groups data points based on how dense the clusters are. Unlike K-Means, DBSCAN does not need the number of clusters beforehand. It also identifies noise points that do not belong to any cluster. The algorithm has two main parameters:
+eps (epsilon): The radius around a point within which neighbors are counted.
+min_samples: The minimum number of points required to form a dense region (cluster).
+This method works well when the clusters have irregular shapes and contain noise.
+
+
+6. K-Means Clustering with Different Values of K
+Theory:
+K-Means Clustering is an unsupervised learning algorithm used to divide the data into K clusters. In this experiment, we experimented with different values of K (number of clusters) ranging from 2 to 6. K-Means tries to minimize the distance between data points and their respective cluster center (centroid). The goal is to place each data point in the cluster with the closest centroid. To determine the optimal K, we can use the Elbow Method, which plots the sum of squared errors for each K and looks for the point where the error starts decreasing slowly (like an elbow shape). K-Means is fast and easy to implement but works best when clusters are spherical.
+
+
+7. Decision Tree with Feature Subsets and Confusion Matrix
+Theory:
+In this experiment, we trained a Decision Tree model using different feature subsets: Age alone and Age with Income. Decision Trees split the data into branches based on feature values, making it easy to interpret. For example, it can ask: "Is the age greater than 30?" If yes, the next question may involve income, and the process continues until a prediction is made. The confusion matrix helps evaluate the model's performance by showing the number of correct and incorrect predictions. For example:
+
+lua
+Copy code
+Confusion Matrix:
+[[4 1]  
+ [2 3]]
+Here:
+
+4: Correct predictions for class 0
+1: Incorrect predictions where class 0 was predicted as class 1
+2: Incorrect predictions where class 1 was predicted as class 0
+3: Correct predictions for class 1
+Decision Trees are easy to visualize and useful for both classification and regression tasks.
+
+
+
+
+
+
+
